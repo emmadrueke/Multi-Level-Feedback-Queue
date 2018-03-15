@@ -34,12 +34,12 @@ class Scheduler {
 
     // Checks that all queues have no processes 
     allEmpty() {
-
+        return this.runningQueues.every((queue) => queue.isEmpty() && this.blockingQueue.isEmpty());
     }
 
     // Adds a new process to the highest priority level running queue
     addNewProcess(process) {
-
+        return this.runningQueues[0].enqueue(process);
     }
 
     // The scheduler's interrupt handler that receives a queue, a process, and an interrupt string
@@ -49,7 +49,21 @@ class Scheduler {
     // If it is a running queue, add the process to the next lower priority queue, or back into itself if it is already in the lowest priority queue
     // If it is a blocking queue, add the process back to the blocking queue
     handleInterrupt(queue, process, interrupt) {
-
+        switch(interrupt) {
+            case 'PROCESS_BLOCKED':
+                this.blockingQueue.enqueue(process);
+                break;
+            case 'PROCESS_READY':
+                this.addNewProcess(process);
+                break;
+            case 'LOWER_PRIORITY':
+                if (queue.getQueueType() === QueueType.CPU_QUEUE) {
+                    const priorityLevel = Math.min(PRIORITY_LEVELS - 1, queue.getPriorityLevel() + 1);
+                    this.runningQueues[priorityLevel].enqueue(process);
+                } else {
+                    this.blockingQueue.enqueue(process);
+                }
+        }
     }
 
     // Private function used for testing; DO NOT MODIFY
